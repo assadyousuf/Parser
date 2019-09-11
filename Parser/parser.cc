@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) Rida Bazzi, 2017
  *
@@ -55,9 +56,9 @@ bool Parser::parse_inputs(){
         return true;
     }
     return false;
-   
     
-   
+    
+    
 }
 
 bool Parser::parse_primary(){
@@ -108,7 +109,7 @@ bool Parser::parse_expr(){
                 return false;
             }
         }
-            return true;
+        return true;
     } else {
         return false;
     }
@@ -242,7 +243,7 @@ bool Parser::parse_do_statement(){
 
 
 bool Parser::parse_statement(){
-   
+    
     if(parse_input_statement()){
         return true;
     } else if(parse_output_statement()){
@@ -372,9 +373,11 @@ bool Parser::parse_input(){
         if(parse_inputs()){
             return true;
         }else {
+            syntax_error();
             return false;
         }
     }else {
+        syntax_error();
         return false;
     }
     
@@ -386,8 +389,6 @@ bool Parser::parse_input(){
 
 
 
-    
-    
 
 
 
@@ -400,7 +401,9 @@ bool Parser::parse_input(){
 
 
 
-    
+
+
+
 
 
 
@@ -410,29 +413,31 @@ bool Parser::parse_input(){
 int main()
 {
     /*
-    LexicalAnalyzer lexer;
-    Token token;
+     LexicalAnalyzer lexer;
+     Token token;
+     
+     token = lexer.GetToken();
+     printf("\n");
+     token.Print();
+     while (token.token_type != END_OF_FILE)
+     {
+     token = lexer.GetToken();
+     token.Print();
+     }*/
     
-    token = lexer.GetToken();
-    printf("\n");
-    token.Print();
-    while (token.token_type != END_OF_FILE)
-    {
-        token = lexer.GetToken();
-        token.Print();
-    }*/
-     
-     
-   //Parser *p=new Parser();
+    
+    //Parser *p=new Parser();
     //p->parse_operator();
     
     Parser parser;
     if(parser.parse_input()) {
-        cout<<"IT WORKS\n";
+        cout<<"IT WORKS";
     } else {
-        cout<<"IT DOES NOT WORK ):\n";
+        cout<<"IT DOES NOT WORK ):";
     }
-
-
+    
+    
 }
+
+
 
