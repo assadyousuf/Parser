@@ -30,6 +30,12 @@ public:
     bool parse_input_statement();
     bool parse_statement();
     bool parse_statement_list();
+    bool parse_procedure_body();
+    bool parse_proc_decl();
+    bool parse_proc_decl_section();
+    bool parse_main();
+    bool parse_program();
+    bool parse_input();
 };
 
 #endif

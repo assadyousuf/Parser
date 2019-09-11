@@ -47,21 +47,16 @@ Token Parser::peek()
 bool Parser::parse_inputs(){
     Token t=peek();
     if(t.token_type==NUM){
-        t= lexer.GetToken();
-        t = peek();
-        if(t.token_type == NUM){
-            parse_inputs();
-            return true;
-        } else if (t.token_type==END_OF_FILE){
+        lexer.GetToken();
+        if(parse_inputs()){
             return true;
         }
-        else{
-            return false;
-        }
+    }else if(t.token_type==END_OF_FILE){
+        return true;
     }
-    else {
-        return false;
-    }
+    return false;
+   
+    
    
 }
 
@@ -356,6 +351,35 @@ bool Parser::parse_main(){
 }
 
 
+bool Parser::parse_program(){
+    if(parse_proc_decl_section()){
+        if(parse_main()){
+            return true;
+        }else{
+            return false;
+        }
+        
+    } else if(parse_main()){
+        return true;
+    } else {
+        return false;
+    }
+    
+}
+
+bool Parser::parse_input(){
+    if(parse_program()){
+        if(parse_inputs()){
+            return true;
+        }else {
+            return false;
+        }
+    }else {
+        return false;
+    }
+    
+}
+
 
 
 
@@ -403,7 +427,7 @@ int main()
     //p->parse_operator();
     
     Parser parser;
-    if(parser.parse_main()) {
+    if(parser.parse_input()) {
         cout<<"IT WORKS\n";
     } else {
         cout<<"IT DOES NOT WORK ):\n";
