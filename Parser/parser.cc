@@ -11,6 +11,13 @@
 #include <iostream>
 #include <cstdlib>
 #include "parser.h"
+#include <map>
+#include <vector>
+#include <stdlib.h>
+
+std::map<std::string,int> symbol_Table;
+std::vector<int> mem(10);
+int next_available=0;
 
 using namespace std;
 
@@ -63,11 +70,21 @@ bool Parser::parse_inputs(){
 
 bool Parser::parse_primary(){
     Token t2=peek();
+    
+    
     if(t2.token_type==ID){
+        if(symbol_Table.find(t2.lexeme)==symbol_Table.end()){
+            mem.at(next_available)=0;
+            symbol_Table[t2.lexeme]=next_available;
+            next_available++;
+        }
+        
         lexer.GetToken();
         return true;
     }else if(t2.token_type==NUM){
         lexer.GetToken();
+        mem[next_available]=atoi(t2.lexeme.c_str());
+        next_available++;
         return true;
     }
     else {
@@ -118,6 +135,12 @@ bool Parser::parse_expr(){
 bool Parser::parse_assign_statement(){
     Token t4=peek();
     if(t4.token_type==ID){
+        if(symbol_Table.find(t4.lexeme)==symbol_Table.end()){
+            symbol_Table[t4.lexeme]=next_available;
+            next_available++;
+            
+        }
+        
         lexer.GetToken();
         t4=peek();
         if(t4.token_type==EQUAL){
@@ -177,7 +200,12 @@ bool Parser::parse_output_statement(){
     if(t8.token_type==OUTPUT){
         lexer.GetToken();
         t8=peek();
-        if(t8.token_type==ID){
+        if(t8.token_type==ID){// If not found in symbol table allocate mem
+            if(symbol_Table.find(t8.lexeme)==symbol_Table.end()){
+                mem.at(next_available)=0;
+                symbol_Table[t8.lexeme]=next_available;
+                next_available++;
+            }
             lexer.GetToken();
             t8=peek();
             if(t8.token_type==SEMICOLON){
@@ -194,25 +222,37 @@ bool Parser::parse_output_statement(){
     }
 }
 
-bool Parser::parse_input_statement(){
+struct stmt_type* Parser::parse_input_statement(){
     Token t9=peek();
     if(t9.token_type==INPUT){
         lexer.GetToken();
         t9=peek();
-        if(t9.token_type==ID){
+        if(t9.token_type==ID){// If not found in symbol table
+            if(symbol_Table.find(t9.lexeme)==symbol_Table.end()){
+                mem.at(next_available)=0;
+                symbol_Table[t9.lexeme]=next_available;
+                next_available++;
+            }
+            
+            stmt_type* t=new stmt_type();
+            t->op1=symbol_Table.find(t9.lexeme)->second;
+            t->op2=0;
+            t->LHS=0;
+            t->operatorn=-20;
+            t->stmt_type=1;
+            
             lexer.GetToken();
             t9=peek();
             if(t9.token_type==SEMICOLON){
-                lexer.GetToken();
-                return true;
+                return t;
             } else {
-                return false;
+                return nullptr;
             }
         } else {
-            return false;
+            return nullptr;
         }
     } else {
-        return false;
+        return nullptr;
     }
     
 }
@@ -380,7 +420,7 @@ bool Parser::parse_input(){
         syntax_error();
         return false;
     }
-    
+ 
 }
 
 
@@ -430,11 +470,15 @@ int main()
     //p->parse_operator();
     
     Parser parser;
-    if(parser.parse_input()) {
+    if(parser.parse_input_statement()!=nullptr) {
         cout<<"IT WORKS";
     } else {
         cout<<"IT DOES NOT WORK ):";
     }
+    
+    
+    ;
+    
     
     
 }
