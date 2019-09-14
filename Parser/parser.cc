@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 std::map<std::string,int> symbol_Table;
-std::map<std::string,int> Proc_Table;
+std::map<std::string,stmt*> Proc_Table;
 std::vector<int> mem(1000);
 int next_available=0;
 stmt *program=nullptr;
@@ -319,10 +319,17 @@ void Parser::parse_procedure_name(){
 
 
 struct stmt* Parser::parse_procedure_invocation(){
+    Token u=peek();
     parse_procedure_name();
     
     stmt* nextNode=new stmt();
     nextNode->stmt_type=5;
+    
+    if(Proc_Table.find(u.lexeme)!=Proc_Table.end()){
+       nextNode->startOfProcedure=Proc_Table[u.lexeme];
+    }else {
+        nextNode=nullptr;
+    }
     
     Token t7=peek();
         if(t7.token_type==SEMICOLON){
@@ -431,8 +438,15 @@ struct stmt* Parser::parse_do_statement(){
         Token z=peek();
         if(z.token_type==ID){
             lexer.GetToken();
+            if(z.token_type==NUM){
+                newNode->op1=findAddress(&z);
+            }else {
+                checkIfInSymbolTable(&z);
+                newNode->op1=symbol_Table[z.lexeme];
+            }
+            
             Token z=peek();
-            parse_procedure_invocation();
+            newNode->startOfProcedure=parse_procedure_invocation();
             return newNode;
             } else {
                 syntax_error();
@@ -523,23 +537,24 @@ struct stmt* Parser::parse_procedure_body(){
 
 
 
-bool Parser::parse_proc_decl(){
+struct stmt*  Parser::parse_proc_decl(){
     Token z3=peek();
     if(z3.token_type==PROC){
         lexer.GetToken();
         z3=peek();
         parse_procedure_name();
-        if(parse_procedure_body()!=nullptr){
+        stmt *stmt=parse_procedure_body();
+        if(stmt!=nullptr){
                 z3=peek();
                 if(z3.token_type==ENDPROC){
                     lexer.GetToken();
-                    return true;
+                    return stmt;
                 } else {
-                    return false;
+                    return nullptr;
                 }
     }
     }
-    return false;
+    return nullptr;
     
     
     
@@ -550,15 +565,25 @@ bool Parser::parse_proc_decl(){
 
 
 
-bool Parser::parse_proc_decl_section(){
-    if(parse_proc_decl()){
-        if(parse_proc_decl_section()){
-            return true;
+struct stmt* Parser::parse_proc_decl_section(){
+    Token PROC= lexer.GetToken();//get PROC
+    string name=peek().lexeme;
+    lexer.UngetToken(PROC);
+    
+    stmt* state=parse_proc_decl();
+    if(state!=nullptr){
+        Proc_Table[name]=state;
+        parse_proc_decl_section();
+        return state;}
+    else {
+        return nullptr;}
+        /*if(parse_proc_decl_section()!=nullptr){
+            return state;
         }
         return true;
     } else {
         return false;
-    }
+    }*/
     
 
     
@@ -583,7 +608,7 @@ void Parser::parse_main(){
 
 
 void Parser::parse_program(){
-    if(parse_proc_decl_section()){
+    if(parse_proc_decl_section()!=nullptr){
            parse_main();
            return;
         }
@@ -615,51 +640,67 @@ void Parser::execute_program(struct stmt* start){
     while(pc!=NULL){
         switch(pc->stmt_type){
                 
-            case 1://case input
+            case 1:{//case input
                 mem[pc->op1]=inputsToProgram[next_input];
                 next_input++;
-                break;
+                break;}
                 
-            case 2:
+            case 2:{//case output
                 cout << mem[pc->op1] << " ";
-                break;
+                break;}
                 
                 
                 
-            case 3: //case assign
-                switch(pc->operatorn){
-            case 7:
-                mem[pc->LHS]=mem[pc->op1]+mem[pc->op2];
-                break;
-                
-            case 8:
-                mem[pc->LHS]=mem[pc->op1]-mem[pc->op2];
-                break;
-                
-            case 9:
-                mem[pc->LHS]=mem[pc->op1]/mem[pc->op2];
-                break;
-                
-                
-            case 10:
-            mem[pc->LHS]=mem[pc->op1]*mem[pc->op2];
-            break;
-                        
-            case -1:
-            mem[pc->LHS]=mem[pc->op1];
-                        
-                        
-                        
+            case 4:{//case do statement
+                int loop=mem[pc->op1];
+                while(loop!=0){
+                    execute_program(pc->startOfProcedure);
+                    loop=loop-1;
                 }
+                break;
+            }
+                
+            case 3:{ //case assign
+                switch(pc->operatorn){
+                    case 7:
+                        mem[pc->LHS]=mem[pc->op1]+mem[pc->op2];
+                        break;
+                        
+                        
+                    case 8:
+                        mem[pc->LHS]=mem[pc->op1]-mem[pc->op2];
+                        break;
+                        
+                        
+                    case 9:
+                        mem[pc->LHS]=mem[pc->op1]/mem[pc->op2];
+                        break;
+                        
+                        
+                        
+                    case 10:
+                        mem[pc->LHS]=mem[pc->op1]*mem[pc->op2];
+                        break;
+                        
+                    case -1:
+                    mem[pc->LHS]=mem[pc->op1];
+                    break;
+                }}
+                        
+            
+                
+            case 5:{//case procedure invocation
+                execute_program(pc->startOfProcedure);
+                break;}
+                
+        }
                 
                 
-        
+        pc=pc->next;
                 
             
                 
         }
-        pc=pc->next;
-    }
     
   
     

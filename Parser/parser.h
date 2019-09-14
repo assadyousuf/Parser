@@ -50,8 +50,8 @@ public:
     struct stmt* parse_statement();
     struct stmt* parse_statement_list();
     struct stmt*  parse_procedure_body();
-    bool parse_proc_decl();
-    bool parse_proc_decl_section();
+    struct stmt*  parse_proc_decl();
+    struct stmt* parse_proc_decl_section();
     void parse_main();
     void parse_program();
     void parse_input();
