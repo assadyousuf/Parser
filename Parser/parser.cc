@@ -245,6 +245,7 @@ void Parser::parse_expr(stmt *par1){
    calledPrimayOnce=false;//initalize
     
     parse_primary(par1);
+    par1->operatorn=-1;
     calledPrimayOnce=true;
     
     Token v=peek();
@@ -636,8 +637,19 @@ void Parser::execute_program(struct stmt* start){
                 break;
                 
             case 9:
-                mem[pc->LHS]=mem[pc->op1]*mem[pc->op2];
+                mem[pc->LHS]=mem[pc->op1]/mem[pc->op2];
                 break;
+                
+                
+            case 10:
+            mem[pc->LHS]=mem[pc->op1]*mem[pc->op2];
+            break;
+                        
+            case -1:
+            mem[pc->LHS]=mem[pc->op1];
+                        
+                        
+                        
                 }
                 
                 
@@ -648,6 +660,8 @@ void Parser::execute_program(struct stmt* start){
         }
         pc=pc->next;
     }
+    
+  
     
 }
 
