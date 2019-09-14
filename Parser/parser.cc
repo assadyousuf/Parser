@@ -16,7 +16,7 @@
 #include <stdlib.h>
 
 std::map<std::string,int> symbol_Table;
-std::vector<int> mem(10);
+std::vector<int> mem(1000);
 int next_available=0;
 
 using namespace std;
@@ -52,23 +52,27 @@ Token Parser::peek()
 }
 
 // Parsing
-bool Parser::parse_inputs(){
+void Parser::parse_inputs(){
     Token t=peek();
     if(t.token_type==NUM){
         lexer.GetToken();
-        if(parse_inputs()){
-            return true;
+        parse_inputs();
+        return;
         }
-    }else if(t.token_type==END_OF_FILE){
-        return true;
+    else if(t.token_type==END_OF_FILE){
+        return;
     }
-    return false;
-    
+    syntax_error();
     
     
 }
+    
+    
+    
+    
 
-bool Parser::parse_primary(){
+
+void Parser::parse_primary(){
     Token t2=peek();
     
     
@@ -80,59 +84,61 @@ bool Parser::parse_primary(){
         }
         
         lexer.GetToken();
-        return true;
+        return;
     }else if(t2.token_type==NUM){
         lexer.GetToken();
         mem[next_available]=atoi(t2.lexeme.c_str());
         next_available++;
-        return true;
+        return;
     }
     else {
         lexer.GetToken();
-        return false;
+        syntax_error();
     }
     
     
     
 }
 
-bool Parser::parse_operator(){
+
+
+void Parser::parse_operator(){
     Token t3=peek();
     if(t3.token_type==PLUS){
         lexer.GetToken();
-        return true;
+        return;
     }else if(t3.token_type==MINUS){
         lexer.GetToken();
-        return true;
+        return;
     } else if(t3.token_type==DIV){
         lexer.GetToken();
-        return true;
+        return;
     }else if(t3.token_type==MULT){
         lexer.GetToken();
-        return true;
+        return;
     }
     else {
-        return false;
+        syntax_error();
     }
     
 }
 
-bool Parser::parse_expr(){
-    if(parse_primary()){
-        if(parse_operator()){
-            if(parse_primary()){
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return true;
-    } else {
-        return false;
+
+
+void Parser::parse_expr(){
+    
+    parse_primary();
+    Token v=peek();
+    
+    if(v.token_type==PLUS || v.token_type==MINUS || v.token_type==MULT || v.token_type==DIV){
+    parse_operator();
+    parse_primary();
     }
 }
 
-bool Parser::parse_assign_statement(){
+
+
+void Parser::parse_assign_statement(){
     Token t4=peek();
     if(t4.token_type==ID){
         if(symbol_Table.find(t4.lexeme)==symbol_Table.end()){
@@ -145,57 +151,57 @@ bool Parser::parse_assign_statement(){
         t4=peek();
         if(t4.token_type==EQUAL){
             lexer.GetToken();
-            if(parse_expr()){
-                t4=peek();
+            parse_expr();
+            t4=peek();
                 if(t4.token_type==SEMICOLON){
                     lexer.GetToken();
-                    return true;
+                    return;
                 } else {
-                    return false;
+                    syntax_error();
                 }
             } else {
-                return true;
+                syntax_error();
             }
         } else {
-            return true;
+            syntax_error();
         }
-    } else {
-        return true;
     }
-    
-}
 
-bool Parser::parse_procedure_name(){
+
+
+
+void Parser::parse_procedure_name(){
     Token t5=peek();
     if(t5.token_type==ID){
         lexer.GetToken();
-        return true;
+        return;
     } else if(t5.token_type==NUM){
         lexer.GetToken();
-        return true;
+        return;
     }
     else{
-        return false;
+        syntax_error();
     }
 }
 
 
-bool Parser::parse_procedure_invocation(){
-    if(parse_procedure_name()){
-        Token t7=peek();
+
+
+void Parser::parse_procedure_invocation(){
+    parse_procedure_name();
+    Token t7=peek();
         if(t7.token_type==SEMICOLON){
             lexer.GetToken();
-            return true;
+            return;
         } else{
-            return false;
+            syntax_error();
         }
-    } else{
-        return false;
-    }
     
 }
 
-bool Parser::parse_output_statement(){
+
+
+void Parser::parse_output_statement(){
     Token t8=peek();
     if(t8.token_type==OUTPUT){
         lexer.GetToken();
@@ -210,19 +216,23 @@ bool Parser::parse_output_statement(){
             t8=peek();
             if(t8.token_type==SEMICOLON){
                 lexer.GetToken();
-                return true;
+                return;
             } else {
-                return false;
+                syntax_error();
             }
         } else {
-            return false;
+            syntax_error();
         }
     } else {
-        return false;
+        syntax_error();
     }
 }
 
-struct stmt_type* Parser::parse_input_statement(){
+
+
+
+
+void Parser::parse_input_statement(){
     Token t9=peek();
     if(t9.token_type==INPUT){
         lexer.GetToken();
@@ -234,31 +244,36 @@ struct stmt_type* Parser::parse_input_statement(){
                 next_available++;
             }
             
-            stmt_type* t=new stmt_type();
-            t->op1=symbol_Table.find(t9.lexeme)->second;
-            t->op2=0;
-            t->LHS=0;
-            t->operatorn=-20;
-            t->stmt_type=1;
+            stmt_type* a=new stmt_type();
+            a->op1=symbol_Table.find(t9.lexeme)->second;
+            a->op2=0;
+            a->LHS=0;
+            a->operatorn=-20;
+            a->stmt_type=1;
             
             lexer.GetToken();
             t9=peek();
             if(t9.token_type==SEMICOLON){
-                return t;
+                lexer.GetToken();
+                return;
             } else {
-                return nullptr;
+                syntax_error();
             }
         } else {
-            return nullptr;
+            syntax_error();
         }
     } else {
-        return nullptr;
+        syntax_error();
     }
     
 }
 
 
-bool Parser::parse_do_statement(){
+
+
+
+
+void Parser::parse_do_statement(){
     Token z=peek();
     if(z.token_type==DO){
         lexer.GetToken();
@@ -266,29 +281,32 @@ bool Parser::parse_do_statement(){
         if(z.token_type==ID){
             lexer.GetToken();
             Token z=peek();
-            if(parse_procedure_invocation()){
-                return true;
+            parse_procedure_invocation();
+            return;
             } else {
-                return false;
+                syntax_error();
             }
         } else {
-            return false;
+            syntax_error();
         }
-    } else {
-        return false;
-    }
+    
     
     
 }
 
 
+
 bool Parser::parse_statement(){
     
-    if(parse_input_statement()){
+    Token y=peek();
+    if(y.token_type==INPUT){
+        parse_input_statement();
         return true;
-    } else if(parse_output_statement()){
+    } else if(y.token_type==OUTPUT){
+        parse_output_statement();
         return true;
-    } else if(parse_do_statement()){
+    } else if(y.token_type==DO){
+        parse_do_statement();
         return true;
     }
     
@@ -299,9 +317,11 @@ bool Parser::parse_statement(){
     
     
     if(z1.token_type==ID && z2.token_type==SEMICOLON){
-        return parse_procedure_invocation();
+        parse_procedure_invocation();
+        return true;
     }else if(z1.token_type==ID && z2.token_type==EQUAL){
-        return parse_assign_statement();
+        parse_assign_statement();
+        return true;
     }
     
     else{
@@ -311,6 +331,9 @@ bool Parser::parse_statement(){
     
     
 }
+
+
+
 
 bool Parser::parse_statement_list(){
     if(parse_statement()){
@@ -323,23 +346,31 @@ bool Parser::parse_statement_list(){
     }
     
 }
+    
+    
 
-bool Parser::parse_procedure_body(){
+
+
+
+void Parser::parse_procedure_body(){
     if(parse_statement_list()){
-        return true;
+        return;
     }
     else {
-        return false;
+        syntax_error();
     }
 }
+
+
+
 
 bool Parser::parse_proc_decl(){
     Token z3=peek();
     if(z3.token_type==PROC){
         lexer.GetToken();
         z3=peek();
-        if(parse_procedure_name()){
-            if(parse_procedure_body()){
+        parse_procedure_name();
+        parse_procedure_body();
                 z3=peek();
                 if(z3.token_type==ENDPROC){
                     lexer.GetToken();
@@ -347,23 +378,20 @@ bool Parser::parse_proc_decl(){
                 } else {
                     return false;
                 }
-            }else {
+    }
+                else {
                 return false;
             }
-        }else {
-            return false;
-        }
-    }else {
-        return false;
-    }
     
     
 }
 
 
 
+
+
+
 bool Parser::parse_proc_decl_section(){
-    
     if(parse_proc_decl()){
         if(parse_proc_decl_section()){
             return true;
@@ -373,55 +401,51 @@ bool Parser::parse_proc_decl_section(){
         return false;
     }
     
+
     
 }
 
-bool Parser::parse_main(){
+
+
+void Parser::parse_main(){
     Token z4=peek();
     if(z4.token_type==MAIN){
         lexer.GetToken();
-        if(parse_procedure_body()){
-            return true;
-        } else {
-            return false;
+        parse_procedure_body();
+        return;
         }
-    }else {
-        return false;
-    }
-    
-}
-
-
-bool Parser::parse_program(){
-    if(parse_proc_decl_section()){
-        if(parse_main()){
-            return true;
-        }else{
-            return false;
-        }
-        
-    } else if(parse_main()){
-        return true;
-    } else {
-        return false;
-    }
-    
-}
-
-bool Parser::parse_input(){
-    if(parse_program()){
-        if(parse_inputs()){
-            return true;
-        }else {
-            syntax_error();
-            return false;
-        }
-    }else {
+    else {
         syntax_error();
-        return false;
     }
+    
+}
+
+
+
+
+void Parser::parse_program(){
+    if(parse_proc_decl_section()){
+           parse_main();
+           return;
+        }
+    
+    else{
+    parse_main();
+        return;
+    }
+    
+
+}
+
+
+
+void Parser::parse_input(){
+    parse_program();
+    parse_inputs();
  
 }
+ 
+
 
 
 
@@ -470,11 +494,7 @@ int main()
     //p->parse_operator();
     
     Parser parser;
-    if(parser.parse_input_statement()!=nullptr) {
-        cout<<"IT WORKS";
-    } else {
-        cout<<"IT DOES NOT WORK ):";
-    }
+    parser.parse_input();
     
     
     ;
