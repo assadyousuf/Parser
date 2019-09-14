@@ -11,14 +11,14 @@
 #include <map>
 #include <vector>
 
-struct stmt_type {
+struct stmt {
     int stmt_type;
     int LHS;
     int operatorn;
     int op1;
     int op2;
-    struct stmt_type *next;
-    
+    stmt *next;
+    stmt *startOfProcedure=nullptr;
     
 };
 
@@ -26,28 +26,36 @@ class Parser {
 private:
     LexicalAnalyzer lexer;
     void syntax_error();
+    void nextSymbol(stmt *param3,Token *tPointer);
+    void addToLinkedList(stmt *statement);
+    void checkIfInSymbolTable(Token *l);
+    void plzwork(Token *ko);
+    int findAddress(Token *token);
+    bool isNum(Token *t);
+    
     Token expect(TokenType expected_type);
     Token peek();
     
 public:
     void parse_inputs();
-    void parse_primary();
-    void parse_operator();
-    void parse_expr();
-    void parse_assign_statement();
-    void parse_do_statement();
+    void parse_primary(stmt *par1);
+    void parse_operator(stmt *ads);
+    void parse_expr(stmt *par1);
+    struct stmt* parse_assign_statement();
+    struct stmt* parse_do_statement();
     void parse_procedure_name();
-    void parse_procedure_invocation();
-    void parse_output_statement();
-    void parse_input_statement();
-    bool parse_statement();
-    bool parse_statement_list();
-    void parse_procedure_body();
+    struct stmt* parse_procedure_invocation();
+    struct stmt*  parse_output_statement();
+    struct stmt*  parse_input_statement();
+    struct stmt* parse_statement();
+    struct stmt* parse_statement_list();
+    struct stmt*  parse_procedure_body();
     bool parse_proc_decl();
     bool parse_proc_decl_section();
     void parse_main();
     void parse_program();
     void parse_input();
+    void execute_program(struct stmt* start);
 };
 
 #endif
